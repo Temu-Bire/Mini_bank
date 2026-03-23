@@ -1,17 +1,17 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-
+# Virtual environment
 venv/
-.env/
 .venv/
+.env/
 
-# VS Code
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# VS Code settings
 .vscode/
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# JSON data files (optional)
+data.json
+
 # Logs
 *.log
-
