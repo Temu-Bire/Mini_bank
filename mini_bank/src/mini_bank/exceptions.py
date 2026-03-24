@@ -1,6 +1,8 @@
 from calendar import c
 
-
+class OwnerNameValidationError(Exception):
+    """Raised when the owner name is invalid (e.g., contains non-alphabetic characters)."""
+    pass
 class InsufficientFundsError(Exception):
     """Raised when an account has insufficient funds for a transaction."""
     pass

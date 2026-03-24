@@ -1,8 +1,8 @@
 
 from pydantic import BaseModel, Field, field_validator, PositiveInt
 class CreateAccount(BaseModel):
-    owner_name: str = Field(..., min_length=3, max_length=100)
-    account_number: int = Field(..., min_length=3, max_length=20)
+    owner_name: str = Field(..., min_length=3, max_length=100, pattern=r'^[a-zA-Z\s]+$')
+    account_number: int = Field(..., ge=100, le=999999999)
     initial_deposit: float = Field(..., ge=0)
 class Deposit(BaseModel):
     account_number: int = Field(..., ge=1)

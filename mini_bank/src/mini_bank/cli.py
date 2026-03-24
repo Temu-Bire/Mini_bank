@@ -1,8 +1,9 @@
 
 # from .services import BankService
+from pydantic import ValidationError
 from services import BankService
 from models import CreateAccount, Deposit, TransferRequest, Withdraw, BalanceResponse, DeleteAccountRequest, TransactionHistory, InterestCalculation
-from exceptions import InsufficientFundsError, AccountNotFoundError, InvalidTransferError, AuthenticationError, AuthorizationError, AccountDeletionError, InterestCalculationError, TransactionHistoryError, AccountCreationError
+from exceptions import InsufficientFundsError, AccountNotFoundError, InvalidTransferError, AuthenticationError, AuthorizationError, AccountDeletionError, InterestCalculationError, OwnerNameValidationError, TransactionHistoryError, AccountCreationError
 from config import logger
 
 bank_service = BankService()  # Initialize the bank service
@@ -26,12 +27,19 @@ def main():
                 name = input("Enter account owner name: ")
                 account_number = int(input("Enter account number: "))
                 initial_deposit = float(input("Enter initial deposit amount: "))
-                account_data = CreateAccount(owner_name=name, account_number=account_number, initial_deposit=initial_deposit)
                 try:
-                    account_id = bank_service.create_account(account_data)
-                    print(f"Account created successfully with ID: {account_id}")
-                except ValueError as e:
-                    print(f"Error creating account: {e}")
+                    account_data = CreateAccount(
+                        owner_name=name,
+                        account_number=account_number,
+                        initial_deposit=initial_deposit
+                    )
+
+                    result = bank_service.create_account(account_data)
+                    print(f"Account created successfully: {result}")
+
+                except ValidationError as e:
+                    logger.error(f"Validation error: {e}")
+                    print("Invalid input. Please enter correct account details.")
             case "2":
                 account_number = int(input("Enter account number for deposit: "))
                 amount = float(input("Enter deposit amount: "))

@@ -18,6 +18,11 @@ class BankService:
         account_number = str(account_data.account_number)
         initial_deposit = account_data.initial_deposit
 
+        if not name.replace(" ", "").isalpha():
+            logger.error(f"Account creation failed: Invalid owner name '{name}'")
+            raise ValueError("Owner name must contain only letters and spaces")
+        
+
         # Check for duplicate account number
         if account_number in self.data["accounts"]:
             logger.error(f"Account creation failed: Duplicate account number {account_number}")
@@ -31,9 +36,12 @@ class BankService:
         # Add account to dictionary
         self.data["accounts"][account_number] = {
             "owner_name": name,
-            "balance": initial_deposit
+            "balance": initial_deposit,
+            "transactions": []  # Initialize an empty list to store transactions
         }
-
+        self.data["accounts"][account_number]["transactions"].append(
+            f"Account created with initial deposit {initial_deposit}"
+        )
         # Save to JSON
         self.save()
 
@@ -57,6 +65,9 @@ class BankService:
 
         # Update balance
         self.data["accounts"][account_number]["balance"] += amount
+        self.data["accounts"][account_number]["transactions"].append(
+            f"Deposit: {amount}"
+        )
 
         # Save to JSON
         self.save()
@@ -87,7 +98,9 @@ class BankService:
 
         # Update balance
         self.data["accounts"][account_number]["balance"] -= amount
-
+        self.data["accounts"][account_number]["transactions"].append(
+            f"Withdrawal: {amount}"
+        )
         # Save to JSON
         self.save()
 
@@ -135,7 +148,13 @@ class BankService:
         # Perform transfer
         self.data["accounts"][from_account_number]["balance"] -= amount
         self.data["accounts"][to_account_number]["balance"] += amount
+        self.data["accounts"][from_account_number]["transactions"].append(
+            f"Transfer sent {amount} to account {to_account_number}"
+        )
 
+        self.data["accounts"][to_account_number]["transactions"].append(
+            f"Transfer received {amount} from account {from_account_number}"
+        )
         # Save to JSON
         self.save()
 
@@ -165,19 +184,15 @@ class BankService:
         logger.info(f"Account {account_number} deleted successfully")
         return True
     def get_transaction_history(self, account_number: int):
-        """Get the transaction history of an account from JSON storage.
-        """
-        # Check if account exists
+        """Get the transaction history of an account."""
+        
+        account_number = account_number
+
         if str(account_number) not in self.data["accounts"]:
             logger.error(f"Transaction history retrieval failed: Account {account_number} not found")
             raise AccountNotFoundError("Account not found")
 
-        # For simplicity, we will return a placeholder transaction history
-        transactions = [
-            "Deposit: 100",
-            "Withdrawal: 50",
-            "Transfer to account 2: 20"
-        ]
+        transactions = self.data["accounts"][str(account_number)].get("transactions", [])
 
         logger.info(f"Transaction history retrieved successfully for account {account_number}")
         return transactions
