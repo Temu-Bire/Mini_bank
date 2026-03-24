@@ -1,0 +1,16 @@
+{
+    "accounts": {
+        "10000": {
+            "owner_name": "abebe",
+            "balance": 40000.0
+        },
+        "10001": {
+            "owner_name": "kebede alemu",
+            "balance": 38000.0
+        },
+        "10002": {
+            "owner_name": "kasa hailu",
+            "balance": 50000.0
+        }
+    }
+}

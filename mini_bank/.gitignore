@@ -3,15 +3,16 @@ venv/
 .venv/
 .env/
 
-# Bytecode
+# Python cache
 __pycache__/
-*.py[cod]
+*.pyc
 
-# VS Code settings
+# VS Code
 .vscode/
 
-# JSON data files (optional)
-data.json
-
 # Logs
+logs/
 *.log
+
+# OS files
+.DS_Store
