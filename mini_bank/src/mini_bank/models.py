@@ -12,7 +12,6 @@ class Withdraw(BaseModel):
     amount: float = Field(..., gt=0)
 class BalanceResponse(BaseModel):
     account_number: int = Field(..., ge=1)
-    balance: float
 class TransferRequest(BaseModel):
     from_account_number: int = Field(..., ge=1)
     to_account_number: int = Field(..., ge=1)
@@ -26,3 +25,15 @@ class InterestCalculation(BaseModel):
     account_number: int = Field(..., ge=1)
     annual_rate: float = Field(..., gt=0)
     years: int = Field(..., ge=1)
+class CurrencyConversionRequest(BaseModel):
+    from_currency: str = Field(..., min_length=3, max_length=3, pattern=r'^[A-Z]+$')
+    to_currency: str = Field(..., min_length=3, max_length=3, pattern=r'^[A-Z]+$')
+    amount: float = Field(..., gt=0)
+
+class CurrencyConversionResponse(BaseModel):
+    from_currency: str
+    to_currency: str
+    amount: float
+    converted_amount: float
+    rate: float
+    date: str

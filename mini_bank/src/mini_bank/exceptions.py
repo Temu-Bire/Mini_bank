@@ -1,22 +1,10 @@
 from calendar import c
 
-class OwnerNameValidationError(Exception):
-    """Raised when the owner name is invalid (e.g., contains non-alphabetic characters)."""
-    pass
 class InsufficientFundsError(Exception):
     """Raised when an account has insufficient funds for a transaction."""
     pass
 class AccountNotFoundError(Exception):
     """Raised when an account is not found in the system."""
-    pass
-class InvalidTransferError(Exception):
-    """Raised when a transfer request is invalid."""
-    pass
-class AuthenticationError(Exception):
-    """Raised when user authentication fails."""
-    pass
-class AuthorizationError(Exception):
-    """Raised when a user is not authorized to perform an action."""
     pass
 class AccountDeletionError(Exception):
     """Raised when an account cannot be deleted due to existing balance or transactions."""

@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import json
 Bank_NAME = "Mini Bank"
-currency = "ETB"
+currency = "USD"
 DATA_DIR = Path(__file__).parent / "logs"
 DATA_DIR.mkdir(exist_ok=True)
 

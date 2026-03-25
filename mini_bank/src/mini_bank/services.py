@@ -1,8 +1,10 @@
 from os import name
-
+import re
+import requests
+from requests.exceptions import RequestException, Timeout
 from config import logger, load_data, save_data
-from exceptions import AuthorizationError, InsufficientFundsError, AccountNotFoundError, InvalidTransferError, AuthenticationError, AccountDeletionError, InterestCalculationError
-from models import CreateAccount, TransferRequest, Deposit, Withdraw, BalanceResponse, DeleteAccountRequest, TransactionHistory, InterestCalculation
+from exceptions import InsufficientFundsError, AccountNotFoundError, AccountDeletionError, InterestCalculationError
+from models import CreateAccount, TransferRequest, Deposit, Withdraw, BalanceResponse, DeleteAccountRequest,TransactionHistory, InterestCalculation, CurrencyConversionRequest, CurrencyConversionResponse
 class BankService:
     def __init__(self):
         self.data = load_data()  # Load data from JSON file
@@ -17,11 +19,6 @@ class BankService:
         name = account_data.owner_name
         account_number = str(account_data.account_number)
         initial_deposit = account_data.initial_deposit
-
-        if not name.replace(" ", "").isalpha():
-            logger.error(f"Account creation failed: Invalid owner name '{name}'")
-            raise ValueError("Owner name must contain only letters and spaces")
-        
 
         # Check for duplicate account number
         if account_number in self.data["accounts"]:
@@ -216,3 +213,97 @@ class BankService:
 
         logger.info(f"Interest calculated successfully for account {account_number}: {interest}")
         return interest
+    def convert_currency(self, conv_data: CurrencyConversionRequest) -> CurrencyConversionResponse:
+        """Convert currency using the Frankfurter API."""
+
+        url = "https://api.frankfurter.dev/v2/rates"
+
+        params = {
+            "base": conv_data.from_currency.upper(),
+            "quotes": conv_data.to_currency.upper()
+        }
+
+        response = None
+
+        try:
+            response = requests.get(url, params=params, timeout=12)
+            response.raise_for_status()
+
+            data = response.json()
+
+            # Handle unexpected list response
+            if isinstance(data, list):
+                data = data[0]
+
+            if not isinstance(data, dict):
+                logger.error(f"Unexpected API response: {data}")
+                raise InterestCalculationError("Invalid response from exchange rate service.")
+
+            # NEW FORMAT (rate)
+            if "rate" in data:
+                rate = float(data["rate"])
+
+            # OLD FORMAT (rates dictionary)
+            elif "rates" in data:
+                to_curr = conv_data.to_currency.upper()
+                rate = float(data["rates"][to_curr])
+
+            else:
+                logger.error(f"Unexpected API response format: {data}")
+                raise InterestCalculationError("Invalid response from exchange rate service.")
+
+            converted_amount = rate * conv_data.amount
+
+            result = CurrencyConversionResponse(
+                from_currency=conv_data.from_currency.upper(),
+                to_currency=conv_data.to_currency.upper(),
+                amount=round(conv_data.amount, 2),
+                converted_amount=round(converted_amount, 2),
+                rate=round(rate, 6),
+                date=data.get("date", "Unknown")
+            )
+
+            logger.info(
+                f"Currency conversion successful: "
+                f"{result.amount} {result.from_currency} → "
+                f"{result.converted_amount} {result.to_currency} "
+                f"(rate: {result.rate})"
+            )
+
+            return result
+
+        except Timeout:
+            logger.error("Exchange rate API timed out")
+            raise InterestCalculationError(
+                "Exchange rate service is slow right now. Try again later."
+            )
+
+        except RequestException as e:
+            error_detail = str(e)
+
+            if response is not None:
+                try:
+                    error_detail = response.json()
+                except Exception:
+                    pass
+
+            logger.error(f"Currency API failed: {e} | Detail: {error_detail}")
+
+            if response and response.status_code == 422:
+                raise InterestCalculationError(
+                    "Invalid currency code. Use codes like USD, EUR, GBP."
+                )
+            elif response and response.status_code == 404:
+                raise InterestCalculationError(
+                    "Exchange rate service is unavailable."
+                )
+            else:
+                raise InterestCalculationError(
+                    "Failed to fetch exchange rates."
+                )
+
+        except (KeyError, TypeError, ValueError) as e:
+            logger.error(f"Unexpected data from API: {e}")
+            raise InterestCalculationError(
+                "Received invalid data from exchange rate service."
+            )

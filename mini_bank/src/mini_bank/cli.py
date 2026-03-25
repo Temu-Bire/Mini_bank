@@ -2,8 +2,8 @@
 # from .services import BankService
 from pydantic import ValidationError
 from services import BankService
-from models import CreateAccount, Deposit, TransferRequest, Withdraw, BalanceResponse, DeleteAccountRequest, TransactionHistory, InterestCalculation
-from exceptions import InsufficientFundsError, AccountNotFoundError, InvalidTransferError, AuthenticationError, AuthorizationError, AccountDeletionError, InterestCalculationError, OwnerNameValidationError, TransactionHistoryError, AccountCreationError
+from models import CreateAccount, CurrencyConversionRequest, Deposit, TransferRequest, Withdraw, BalanceResponse, DeleteAccountRequest, InterestCalculation
+from exceptions import InsufficientFundsError, AccountNotFoundError, AccountDeletionError, InterestCalculationError, TransactionHistoryError
 from config import logger
 
 bank_service = BankService()  # Initialize the bank service
@@ -19,7 +19,8 @@ def main():
         print("6. delete Account")
         print("7. Transaction History")
         print("8. Calculate Interest")
-        print("9. Exit")
+        print("9. Currency Conversion")
+        print("10. Exit")
         choice = input("Enter your choice: ")
 
         match choice:
@@ -60,7 +61,7 @@ def main():
                     print(f"Error during withdrawal: {e}")
             case "4":
                 account_number = int(input("Enter account number to check balance: "))
-                balance_request = BalanceResponse(account_number=account_number, balance=0.0)  # Balance will be fetched in service
+                balance_request = BalanceResponse(account_number=account_number)  # Balance will be fetched in service
                 try:
                     balance = bank_service.get_balance(balance_request)
                     print(f"Account number {account_number} has balance: {balance}")
@@ -102,6 +103,24 @@ def main():
                 except InterestCalculationError as e:
                     print(f"Error calculating interest: {e}")
             case "9":
+                print("Currency Conversion")
+                from_currency = input("Enter source currency (e.g. USD, ETB): ").strip().upper()
+                to_currency = input("Enter target currency (e.g. EUR, GBP): ").strip().upper()
+                try:
+                    amount = float(input("Enter amount to convert: "))
+                    conv_data = CurrencyConversionRequest(
+                        from_currency=from_currency,
+                        to_currency=to_currency,
+                        amount=amount
+                    )
+                    result = bank_service.convert_currency(conv_data)
+                    print(f"\n✅ Conversion Result:")
+                    print(f"{result.amount} {result.from_currency} = {result.converted_amount} {result.to_currency}")
+                    print(f"Exchange Rate: 1 {result.from_currency} = {result.rate} {result.to_currency}")
+                    print(f"Date: {result.date}")
+                except Exception as e:   # Catch ValidationError + custom errors
+                    print(f"Error during conversion: {e}")
+            case "10":
                 print("Exiting...")
                 break
             case _:
